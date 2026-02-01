@@ -385,8 +385,10 @@
             if (item) item.classList.add('active');
         }
 
+        // Fetch from local JSON (GitHub Actions generated)
         async function loadData() {
             try {
+                // Fetch data.json with cache busting
                 const response = await fetch('data.json?t=' + new Date().getTime());
                 const data = await response.json();
 
@@ -514,6 +516,21 @@
         }
 
         async function refreshData() {
+            // Check if hosted on GitHub Pages (Static Site)
+            if (window.location.hostname.includes('github.io')) {
+                const btn = document.getElementById('refreshBtn');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '🔄 載入中...';
+
+                await loadData();
+
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                alert("已重新載入地圖資料。\n(注意：GitHub Pages 為靜態網站，資料由系統每 10 分鐘自動更新，無法手動觸發爬蟲。)");
+                return;
+            }
+
             const btn = document.getElementById('refreshBtn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
