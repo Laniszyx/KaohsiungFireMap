@@ -1,0 +1,39 @@
+name: Update Fire Incident Data
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Every 10 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for git-auto-commit-action
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Scraper
+      run: python scraper.py
+      # Environment variables for Geocoding API ID/KEY would go here if implemented
+      # env:
+      #   GEOCODING_API_KEY: ${{ secrets.GEOCODING_API_KEY }}
+
+    - name: Commit and Push changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "data: update incident data [skip ci]"
+        file_pattern: "data.json location_cache.json"
+        branch: main

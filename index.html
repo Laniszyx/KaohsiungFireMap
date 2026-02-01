@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高雄市政府消防局即時案件地圖</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Design Styles -->
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            overflow: hidden;
+            /* Prevent body scroll */
+        }
+
+        #container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #sidebar {
+            width: 300px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .incident-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+        }
+
+        .incident-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .incident-item:hover {
+            background-color: #f0f7ff;
+        }
+
+        .incident-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1976d2;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .item-time {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .item-title {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .item-address {
+            font-size: 0.9rem;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        .header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            pointer-events: none;
+            /* Let clicks pass through to map */
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            /* Moved to left to avoid sidebar */
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: inline-block;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .dot-fire {
+            background: #d32f2f;
+        }
+
+        .dot-car {
+            background: #f57c00;
+        }
+
+        .dot-trauma {
+            background: #7b1fa2;
+        }
+
+        .dot-other {
+            background: #1976d2;
+        }
+
+        /* Custom Map Markers */
+        .custom-marker-dot {
+            position: relative;
+            background: none;
+            border: none;
+        }
+
+        .marker-pin {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .pulse-ring {
+            border: 3px solid #ff4444;
+            /* Default fallback */
+            border-radius: 50%;
+            height: 40px;
+            width: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulsate 2s ease-out infinite;
+            opacity: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes pulsate {
+            0% {
+                transform: translate(-50%, -50%) scale(0.1, 0.1);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.2, 1.2);
+                opacity: 0;
+            }
+        }
+
+        .refresh-btn {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            pointer-events: auto;
+            /* Enable click */
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .refresh-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .refresh-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .refresh-icon {
+            margin-right: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <div id="map"></div>
+        <div id="sidebar">
+            <div class="sidebar-header">案件列表 (近2小時)</div>
+            <ul id="incident-list" class="incident-list">
+                <!-- Items will be injected here -->
+            </ul>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>高雄消防即時案件地圖</h1>
+        <p>資料來源：高雄市政府消防局 (近 2 小時案件)</p>
+        <button class="refresh-btn" onclick="refreshData()" id="refreshBtn">
+            <span class="refresh-icon">↻</span> 刷新資料
+        </button>
+    </div>
+
+    <div class="legend">
+        <div style="font-weight: bold; margin-bottom: 8px;">案件類別</div>
+        <div class="legend-item"><span class="dot dot-fire"></span> 火災</div>
+        <div class="legend-item"><span class="dot dot-car"></span> 車禍</div>
+        <div class="legend-item"><span class="dot dot-trauma"></span> 創傷</div>
+        <div class="legend-item"><span class="dot dot-other"></span> 其他案件</div>
+        <hr style="margin: 5px 0; border: 0; border-top: 1px solid #ccc;">
+        <div class="legend-item"><span
+                style="border: 2px solid red; border-radius: 50%; width: 12px; height: 12px; margin-right: 8px; display:inline-block;"></span>
+            案件閃爍 = 30分鐘內</div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // Initialize Map centered on Kaohsiung
+        const map = L.map('map').setView([22.6273, 120.3014], 12);
+
+        // Add Tile Layer (OpenStreetMap)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Mock Geocoding Logic since we don't have real lat/lng in data.json yet
+        // In production, 'scraper.py' should fill lat/lng.
+        // Here we define a dictionary of District Centers for fallback
+        const districtCenters = {
+            "新興區": [22.631386, 120.300539],
+            "前金區": [22.627255, 120.293674],
+            "苓雅區": [22.621770, 120.312521],
+            "鹽埕區": [22.624738, 120.284206],
+            "鼓山區": [22.636928, 120.279624],
+            "旗津區": [22.565345, 120.279316],
+            "前鎮區": [22.586411, 120.318288],
+            "三民區": [22.643329, 120.313492],
+            "楠梓區": [22.728514, 120.327042],
+            "小港區": [22.565615, 120.354224],
+            "左營區": [22.673895, 120.293856],
+            "仁武區": [22.701915, 120.347065],
+            "大社區": [22.730302, 120.346858],
+            "岡山區": [22.796335, 120.296570],
+            "路竹區": [22.855013, 120.261868],
+            "阿蓮區": [22.883307, 120.326265],
+            "田寮區": [22.872740, 120.360170],
+            "燕巢區": [22.793774, 120.362947],
+            "橋頭區": [22.757532, 120.305607],
+            "梓官區": [22.760199, 120.266209],
+            "彌陀區": [22.782877, 120.246777],
+            "永安區": [22.819662, 120.224856],
+            "湖內區": [22.906646, 120.222728],
+            "鳳山區": [22.625880, 120.357597],
+            "大寮區": [22.604515, 120.395780],
+            "林園區": [22.503463, 120.394877],
+            "鳥松區": [22.658603, 120.362678],
+            "大樹區": [22.693409, 120.433146],
+            "旗山區": [22.888514, 120.481923],
+            "美濃區": [22.897455, 120.540195],
+            "六龜區": [22.997576, 120.633900],
+            "內門區": [22.944208, 120.460832],
+            "杉林區": [22.969642, 120.536966],
+            "甲仙區": [23.082717, 120.590509],
+            "桃源區": [23.161049, 120.764507],
+            "那瑪夏區": [23.216669, 120.686526],
+            "茂林區": [22.888494, 120.662241],
+            "茄萣區": [22.906429, 120.180234]
+        };
+
+        // Layer Group for Markers (to ensure we can clear them on reload)
+        const markersLayer = L.layerGroup().addTo(map);
+        // Store incident objects and markers for interactivity
+        let incidentMap = {};
+
+        function getCategoryColor(type) {
+            if (type.includes('火災')) return '#d32f2f'; // Dark Red
+            if (type.includes('車禍')) return '#f57c00'; // Orange
+            if (type.includes('創傷')) return '#7b1fa2'; // Purple
+            return '#1976d2'; // Blue (Default)
+        }
+
+        // Deterministic random based on string (Incident ID)
+        function seededRandom(str) {
+            let h = 0xdeadbeef;
+            for (let i = 0; i < str.length; i++)
+                h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
+            return ((h ^ h >>> 16) >>> 0) / 4294967296;
+        }
+
+        function focusOnIncident(id, lat, lng) {
+            if (lat && lng) {
+                map.flyTo([lat, lng], 16, {
+                    animate: true,
+                    duration: 1.5
+                });
+                // Open popup if marker exists
+                const marker = incidentMap[id];
+                if (marker) {
+                    setTimeout(() => marker.openPopup(), 1500);
+                }
+            }
+
+            // Highlight list item
+            document.querySelectorAll('.incident-item').forEach(el => el.classList.remove('active'));
+            const item = document.getElementById(`item-${id}`);
+            if (item) item.classList.add('active');
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch('data.json?t=' + new Date().getTime());
+                const data = await response.json();
+
+                // Clear existing layers and list
+                markersLayer.clearLayers();
+                incidentMap = {};
+                const listContainer = document.getElementById('incident-list');
+                listContainer.innerHTML = '';
+
+                const now = new Date();
+                const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+                let count = 0;
+
+                data.forEach(incident => {
+                    const incidentTime = new Date(incident.timestamp);
+
+                    // Filter > 2 hours
+                    if (incidentTime < twoHoursAgo) return;
+
+                    count++;
+
+                    // Determine location
+                    let lat = incident.lat;
+                    let lng = incident.lng;
+
+                    // Fallback: Parsing district from address if lat/lng missing
+                    if (!lat || !lng) {
+                        for (const [district, coords] of Object.entries(districtCenters)) {
+                            if (incident.address.includes(district)) {
+                                // Deterministic Offset based on ID so it stays consistent
+                                const seedX = seededRandom(incident.id + 'lat');
+                                const seedY = seededRandom(incident.id + 'lng');
+
+                                // Small jitter (approx 400m radius)
+                                lat = coords[0] + (seedX - 0.5) * 0.005;
+                                lng = coords[1] + (seedY - 0.5) * 0.005;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Add to List
+                    const li = document.createElement('li');
+                    li.id = `item-${incident.id}`;
+                    li.className = 'incident-item';
+                    li.innerHTML = `
+                    <div class="item-header">
+                        <span class="item-title" style="color: ${getCategoryColor(incident.type)}">${incident.type}</span>
+                        <span class="item-time">${incident.timestamp.split(' ')[1]}</span>
+                    </div>
+                    <div class="item-address">${incident.address}</div>
+                    <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">${incident.status}</div>
+                `;
+                    li.onclick = () => focusOnIncident(incident.id, lat, lng);
+                    listContainer.appendChild(li);
+
+                    if (!lat || !lng) return; // Skip Marker if no location found
+
+                    const isRecent = (now - incidentTime) < 30 * 60 * 1000; // 30 mins
+                    let marker;
+
+                    const popupContent = `
+                    <div style="min-width: 200px;">
+                        <b style="font-size: 1.1em; color: ${getCategoryColor(incident.type)}">${incident.type}</b><br>
+                        <span style="color: #666; font-size: 0.9em;">${incident.category}</span><br>
+                        <hr style="margin: 5px 0; border: 0; border-top: 1px solid #eee;">
+                        時間: ${incident.timestamp}<br>
+                        地點: ${incident.address}<br>
+                        <span style="font-size: 0.8em; color: #888;">(${incident.lat.toFixed(5)}, ${incident.lng.toFixed(5)})</span><br>
+                        狀態: <b>${incident.status}</b><br>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(incident.address)}" target="_blank" style="color: #1976d2; font-size: 0.9em; text-decoration: none; margin-top: 4px; display: inline-block;">
+                           📍 在 Google地圖 查看
+                        </a>
+                    </div>
+                `;
+
+                    const baseColor = getCategoryColor(incident.type);
+
+                    if (incident.precision === 'area') {
+                        // Circle for area
+                        marker = L.circle([lat, lng], {
+                            color: baseColor,
+                            fillColor: baseColor,
+                            fillOpacity: 0.2,
+                            radius: 400
+                        }).bindPopup(popupContent);
+                    } else {
+                        // Use DivIcon for Points to support proper CSS animations (Pulse)
+
+                        // Define class for the marker dot
+                        let markerClass = `custom-marker-dot`;
+                        let htmlContent = `<div style="background-color: ${baseColor};" class="marker-pin"></div>`;
+
+                        // If recent, add the pulse ring
+                        if (isRecent) {
+                            markerClass += ' recent-pulse';
+                            htmlContent += `<div class="pulse-ring" style="border-color: ${baseColor};"></div>`;
+                        }
+
+                        const customIcon = L.divIcon({
+                            className: markerClass,
+                            html: htmlContent,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10] // Center
+                        });
+
+                        marker = L.marker([lat, lng], { icon: customIcon }).bindPopup(popupContent);
+                    }
+
+                    markersLayer.addLayer(marker);
+                    incidentMap[incident.id] = marker;
+
+                    // On Marker Click -> Scroll List
+                    marker.on('click', () => {
+                        scrollToItem(incident.id);
+                    });
+                });
+
+                console.log(`Displayed ${count} incidents.`);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('refreshBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '🔄 更新中...';
+
+            try {
+                const res = await fetch('/refresh', { method: 'POST' });
+                if (res.ok) {
+                    await loadData();
+                } else {
+                    alert("刷新失敗 (Server Error)");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("刷新失敗 (Network Error)");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function scrollToItem(id) {
+            const item = document.getElementById(`item-${id}`);
+            if (item) {
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.querySelectorAll('.incident-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+            }
+        }
+
+        loadData();
+        // Refresh every minute
+        setInterval(loadData, 60000);
+    </script>
+
+</body>
+
+</html>

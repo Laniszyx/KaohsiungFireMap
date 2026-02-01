@@ -1,0 +1,134 @@
+[
+  {
+    "id": "0421776e20af451493624bc7b42b9a80",
+    "timestamp": "2026/02/01 18:25:42",
+    "category": "火災",
+    "type": "其他",
+    "address": "高雄市鳳山區南正二路",
+    "status": "已派遣",
+    "lat": 22.5987063,
+    "lng": 120.3322762,
+    "precision": "point"
+  },
+  {
+    "id": "a35bc39f744babccae03d19749c08df8",
+    "timestamp": "2026/02/01 18:24:23",
+    "category": "緊急救護",
+    "type": "急病",
+    "address": "高雄市鳳山區",
+    "status": "已派遣",
+    "lat": 22.6270943,
+    "lng": 120.3627723,
+    "precision": "area"
+  },
+  {
+    "id": "bf33f415022de6add8f468a3c2c084c6",
+    "timestamp": "2026/02/01 18:22:00",
+    "category": "緊急救護",
+    "type": "車禍",
+    "address": "高雄市鹽埕區富野路",
+    "status": "已派遣",
+    "lat": 22.6283394,
+    "lng": 120.2837643,
+    "precision": "point"
+  },
+  {
+    "id": "9b2c2f77c7e9a612d81759b8d3fec450",
+    "timestamp": "2026/02/01 18:22:00",
+    "category": "緊急救護",
+    "type": "車禍",
+    "address": "高雄市鹽埕區大公路",
+    "status": "已出動",
+    "lat": 22.7902977,
+    "lng": 120.3032817,
+    "precision": "point"
+  },
+  {
+    "id": "d532ca76f946f86474cb8a97405c06c0",
+    "timestamp": "2026/02/01 18:17:29",
+    "category": "緊急救護",
+    "type": "車禍",
+    "address": "高雄市鳳山區五甲三路",
+    "status": "已到達",
+    "lat": 22.5907901,
+    "lng": 120.325006,
+    "precision": "point"
+  },
+  {
+    "id": "fd2f5831caa379f2150fa7c12d666d21",
+    "timestamp": "2026/02/01 18:14:04",
+    "category": "緊急救護",
+    "type": "急病",
+    "address": "高雄市苓雅區",
+    "status": "已到達",
+    "lat": 22.62177,
+    "lng": 120.312347,
+    "precision": "area"
+  },
+  {
+    "id": "5a58a162a762cd9d229448be329c9743",
+    "timestamp": "2026/02/01 18:10:42",
+    "category": "緊急救護",
+    "type": "車禍",
+    "address": "高雄市大寮區萬丹路",
+    "status": "送醫中",
+    "lat": 22.6134127,
+    "lng": 120.4002356,
+    "precision": "point"
+  },
+  {
+    "id": "94b2a2d92a3ecbe61495c7b6127c85f4",
+    "timestamp": "2026/02/01 18:08:29",
+    "category": "緊急救護",
+    "type": "創傷",
+    "address": "高雄市三民區鼎金後路",
+    "status": "已出動",
+    "lat": 22.6716801,
+    "lng": 120.3223847,
+    "precision": "point"
+  },
+  {
+    "id": "eb63e4dddd64c490d7031efb84cd6a68",
+    "timestamp": "2026/02/01 18:07:46",
+    "category": "緊急救護",
+    "type": "其他",
+    "address": "高雄市鼓山區美術東四路",
+    "status": "送醫中",
+    "lat": 22.6633368,
+    "lng": 120.2904298,
+    "precision": "point"
+  },
+  {
+    "id": "232717be1fffde0fa05023012dfc2bac",
+    "timestamp": "2026/02/01 17:57:22",
+    "category": "緊急救護",
+    "type": "車禍",
+    "address": "高雄市左營區文自路",
+    "status": "已到達",
+    "lat": 22.6857611,
+    "lng": 120.3162932,
+    "precision": "point"
+  },
+  {
+    "id": "e0ec1d3ef1dfc9b94062d6d4e7229036",
+    "timestamp": "2026/02/01 17:50:52",
+    "category": "緊急救護",
+    "type": "急病",
+    "address": "高雄市苓雅區",
+    "status": "已到院",
+    "lat": 22.62177,
+    "lng": 120.312347,
+    "precision": "area"
+  },
+  {
+    "id": "3f627faf7890fc6f7183994b14a5cc1b",
+    "timestamp": "2026/02/01 17:41:32",
+    "category": "緊急救護",
+    "type": "其他",
+    "address": "高雄市楠梓區盛昌街",
+    "status": "已到院",
+    "lat": 22.7142781,
+    "lng": 120.2862209,
+    "precision": "point"
+  }
+]
