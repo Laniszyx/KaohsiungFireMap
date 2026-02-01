@@ -34,6 +34,6 @@ jobs:
     - name: Commit and Push changes
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: "data: update incident data [skip ci]"
+        commit_message: "data: update incident data"
         file_pattern: "data.json location_cache.json"
         branch: main
